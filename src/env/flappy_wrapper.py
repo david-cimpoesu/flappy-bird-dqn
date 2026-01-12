@@ -15,9 +15,10 @@ class FlappyWrapper:
     - face stack de ultimele N frame-uri
     """
 
-    def __init__(self, render=True, frame_stack=4):
+    def __init__(self, render=True, frame_stack=4, frame_skip=4):
         self.frame_stack = frame_stack
         self.frames = deque(maxlen=frame_stack)
+        self.frame_skip = frame_skip
 
         self.env = gym.make(
             "FlappyBird-v0",
@@ -36,13 +37,35 @@ class FlappyWrapper:
         return self._get_state()
 
     def step(self, action):
-        obs, reward, terminated, truncated, info = self.env.step(action)
-        done = terminated or truncated
+        total_reward = 0.0
+        done = False
+
+        # Frame Skipping Logic
+        for _ in range(self.frame_skip):
+            obs, reward, terminated, truncated, info = self.env.step(action)
+
+            # --- REWARD SHAPING ---
+            # Standard rewards are +0.1 alive, +1.0 pipe, -1.0 death
+            # We add a small bonus for staying alive to encourage horizontal progress
+            shaped_reward = reward
+            if terminated:
+                # Heavy penalty to discourage "giving up" early
+                shaped_reward = -5.0
+            elif reward >= 1.0:
+                # Massively increase the pipe reward so the CNN values the gap
+                shaped_reward = 10.0
+            else:
+                # Small survival bonus to keep the bird in the air
+                shaped_reward = 0.1
+
+            total_reward += shaped_reward
+            done = terminated or truncated
+            if done:
+                break
 
         frame = self._preprocess(obs)
         self.frames.append(frame)
-
-        return self._get_state(), reward, done, info
+        return np.stack(self.frames, axis=0), total_reward, done, info
 
     def close(self):
         self.env.close()

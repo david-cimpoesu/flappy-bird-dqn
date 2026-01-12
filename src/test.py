@@ -1,46 +1,45 @@
-import numpy as np
 import torch
-
+import time
 from env.flappy_wrapper import FlappyWrapper
-from model.cnn_model import FlappyCNN
+from agent.dqn_agent import DQNAgent
 
 
 def main():
-    print("Creating environment...")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Testing on: {device}")
+
+    # Create Environment with Render ON
     env = FlappyWrapper(render=True, frame_stack=4)
 
-    print("Resetting environment...")
-    state = env.reset()
+    # Initialize Agent (State shape and action size must match training)
+    agent = DQNAgent(state_shape=(4, 84, 84), action_size=2, device=device)
 
-    print("State shape:", state.shape)  # (4, 84, 84)
+    # Load the best model
+    try:
+        agent.load("checkpoints/best_model.pth")
+        print("Model loaded successfully.")
+    except FileNotFoundError:
+        print("Error: checkpoints/best_model.pth not found. Train the model first.")
+        return
 
-    # Convertim la tensor PyTorch
-    state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
-    print("State tensor shape:", state_tensor.shape)  # (1, 4, 84, 84)
+    # Run for a few episodes
+    for episode in range(5):
+        state = env.reset()
+        total_reward = 0
+        done = False
 
-    print("Creating model...")
-    model = FlappyCNN(input_channels=4, num_actions=2)
+        while not done:
+            # Act with epsilon=0 (Pure Exploitation)
+            action = agent.act(state, epsilon=0.0)
+            state, reward, done, info = env.step(action)
+            total_reward += reward
 
-    print("Running forward pass...")
-    with torch.no_grad():
-        q_values = model(state_tensor)
+            # Optional: Slow down slightly to watch
+            # time.sleep(0.03)
 
-    print("Q values shape:", q_values.shape)  # (1, 2)
-    print("Q values:", q_values)
-
-    print("Running random agent for 1000 steps...")
-    for i in range(1000):
-        action = np.random.randint(0, 2)
-        next_state, reward, done, info = env.step(action)
-        if done:
-            print("Game over, resetting...")
-            env.reset()
-
-    print("Next state shape:", next_state.shape)
-    print("Reward:", reward, "Done:", done)
+        print(f"Test Episode {episode + 1} Score: {total_reward}")
 
     env.close()
-    print("TEST FINISHED SUCCESSFULLY")
 
 
 if __name__ == "__main__":
