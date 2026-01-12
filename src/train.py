@@ -82,6 +82,8 @@ def main():
             episode_reward += reward
 
             # 4. Train Agent
+            loss = None
+
             if len(buffer) > LEARNING_STARTS:
                 if frame_idx % 4 == 0:
                     loss = agent.learn(buffer)
