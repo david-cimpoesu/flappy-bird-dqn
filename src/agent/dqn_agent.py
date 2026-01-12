@@ -62,8 +62,12 @@ class DQNAgent:
         # 4. Compute Target Q values: r + gamma * max(Q_target(s', a'))
         # We use the Target Network for this to ensure stability (Course 8, Slide 63)
         with torch.no_grad():
-            next_q_values = self.target_net(next_states).max(1)[0].unsqueeze(1)
-            # If done, there is no next state, so target is just reward
+            # Double DQN:
+            # 1. Policy net chooses the action
+            next_actions = self.policy_net(next_states).argmax(1, keepdim=True)
+            # 2. Target net evaluates that action
+            next_q_values = self.target_net(next_states).gather(1, next_actions)
+
             target_q = rewards + (1 - dones) * self.gamma * next_q_values
 
         # 5. Compute Loss and Optimize

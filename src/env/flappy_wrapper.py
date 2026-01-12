@@ -57,6 +57,8 @@ class FlappyWrapper:
             else:
                 # Small survival bonus to keep the bird in the air
                 shaped_reward = 0.1
+            shaped_reward = np.clip(shaped_reward, -1.0, 1.0)
+
 
             total_reward += shaped_reward
             done = terminated or truncated

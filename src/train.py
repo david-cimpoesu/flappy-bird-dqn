@@ -8,15 +8,17 @@ from agent.replay_buffer import ReplayBuffer
 # --- Hyperparameters ---
 MAX_EPISODES = 10000  # Total games to play
 MAX_STEPS = 2000  # Max steps per game (to prevent infinite loops)
-BATCH_SIZE = 64
-BUFFER_SIZE = 50000  # Course suggests 50k, but 30k is fine for 16GB RAM
-LEARNING_RATE = 1e-4
+BATCH_SIZE = 32
+BUFFER_SIZE = 100000
+LEARNING_RATE = 1e-4      # îl lăsăm cum e
 GAMMA = 0.99
+
 EPSILON_START = 1.0
-EPSILON_END = 0.02
-EPSILON_DECAY = 150000  # Frames over which epsilon decays
-SYNC_TARGET_FRAMES = 1000  # How often to update target net
-LEARNING_STARTS = 5000  # Fill buffer before training
+EPSILON_END = 0.05
+EPSILON_DECAY = 500000    # MULT mai lent
+
+SYNC_TARGET_FRAMES = 5000 # target net mai stabil
+LEARNING_STARTS = 20000   # buffer serios înainte să învețe
 
 
 def main():
@@ -25,7 +27,7 @@ def main():
     print(f"Training on: {device}")
 
     # Initialize Environment
-    env = FlappyWrapper(render=False, frame_stack=4, frame_skip=2)
+    env = FlappyWrapper(render=False, frame_stack=4, frame_skip=4)
 
     # Initialize Agent and Buffer
     agent = DQNAgent(
@@ -50,6 +52,13 @@ def main():
 
     for episode in range(1, MAX_EPISODES + 1):
         state = env.reset()
+        # Random no-op start (random initial frames)
+        for _ in range(np.random.randint(1, 30)):
+            action = np.random.randint(0, 2)
+            state, _, done, _ = env.step(action)
+            if done:
+                state = env.reset()
+
         episode_reward = 0
         loss_val = 0
 
@@ -74,7 +83,9 @@ def main():
 
             # 4. Train Agent
             if len(buffer) > LEARNING_STARTS:
-                loss = agent.learn(buffer)
+                if frame_idx % 4 == 0:
+                    loss = agent.learn(buffer)
+
                 if loss is not None:
                     loss_val = loss
 
