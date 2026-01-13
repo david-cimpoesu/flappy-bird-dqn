@@ -4,13 +4,6 @@ import torch.nn.functional as F
 
 
 class FlappyCNN(nn.Module):
-    """
-    CNN care primește:
-        (B, C, 84, 84)
-    și scoate:
-        (B, 2)  -> Q(nu_sari), Q(sari)
-    """
-
     def __init__(self, input_channels=4, num_actions=2):
         super().__init__()
 
@@ -18,7 +11,6 @@ class FlappyCNN(nn.Module):
         self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
         self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
 
-        # Calculăm dimensiunea flatten automat
         with torch.no_grad():
             dummy = torch.zeros(1, input_channels, 84, 84)
             x = self._forward_conv(dummy)
@@ -34,7 +26,6 @@ class FlappyCNN(nn.Module):
         return x
 
     def forward(self, x):
-        # x: (B, C, 84, 84)
         x = self._forward_conv(x)
         x = x.view(x.size(0), -1)
         x = F.relu(self.fc1(x))
