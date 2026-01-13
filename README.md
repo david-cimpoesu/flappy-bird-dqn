@@ -90,7 +90,7 @@ Pentru a optimiza performanța și a respecta cerințele de punctaj maxim, input
 
 ## 6. Rezultate Obținute
 
-În faza de testare, agentul a demonstrat o performanță robustă, atingând scoruri de până la 70.3, ceea ce corespunde trecerii a aproximativ 6-7 obstacole consecutive.  
+În faza de testare, agentul a demonstrat o performanță modestă, atingând scoruri de până la 70.3, ceea ce corespunde trecerii a aproximativ 3-5 obstacole consecutive.  
 Acest rezultat sugerează că agentul a învățat o politică coerentă bazată exclusiv pe informație vizuală.
 
 **Exemplu Log Testare:**
