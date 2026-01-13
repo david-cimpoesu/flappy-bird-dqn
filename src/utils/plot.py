@@ -10,7 +10,6 @@ def plot_learning_curve(scores_file="results/training_scores.npy", output_file="
 
     scores = np.load(scores_file)
 
-    # Calculate Moving Average (to smooth the jittery graph)
     window_size = 100
     moving_avg = np.convolve(scores, np.ones(window_size) / window_size, mode='valid')
 
